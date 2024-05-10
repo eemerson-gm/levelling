@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import React from "react";
+import { DetailedHTMLProps, InputHTMLAttributes, useState } from "react";
 import { Check } from "react-feather";
 
-const Checkbox: React.FC<any> = ({ ...props }) => {
-  const [checked, setChecked] = useState<boolean>(false);
+interface CheckboxProps {
+  defaultChecked: boolean;
+}
+
+const Checkbox: React.FC<
+  DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement> &
+    CheckboxProps
+> = ({ onChange, defaultChecked, ...props }) => {
+  const [checked, setChecked] = useState<boolean>(defaultChecked);
 
   const checkedColor = checked ? "bg-blue-400" : "bg-blue-800";
   const hoverColor = checked ? "bg-blue-800" : "bg-blue-600";
@@ -18,7 +26,10 @@ const Checkbox: React.FC<any> = ({ ...props }) => {
         type="checkbox"
         className="absolute w-full h-full opacity-0 m-0 cursor-pointer"
         checked={checked}
-        onChange={(e) => setChecked(e.target.checked)}
+        onChange={(e) => {
+          setChecked(e.target.checked);
+          if (onChange) onChange(e);
+        }}
         {...props}
       />
     </div>
