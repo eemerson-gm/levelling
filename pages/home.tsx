@@ -3,30 +3,66 @@
 import { Checkbox } from "@/components/checkbox";
 import { Menu } from "@/components/menu";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Coffee, Wind, Zap } from "react-feather";
+import { AlertCircle, Coffee, Wind, Zap } from "react-feather";
 
-const skillSize = "64";
+const iconSize = "64";
 const baseLevelExperience = 100;
 const baseGainExperience = 10;
 
 const skills = {
   strength: {
-    icon: <Zap size={skillSize} />,
-    quests: ["30 pushups", "50 bicep curls", "30 squats"],
+    icon: <Zap size={iconSize} />,
+    quests: [
+      {
+        name: "Complete 10 push-ups",
+        points: 1,
+      },
+      {
+        name: "Complete 30 sit-ups",
+        points: 1,
+      },
+      {
+        name: "Lift 50 reps of weights",
+        points: 1,
+      },
+    ],
   },
-  agility: {
-    icon: <Wind size={skillSize} />,
-    quests: ["1km run"],
+  dexterity: {
+    icon: <Wind size={iconSize} />,
+    quests: [
+      {
+        name: "Don't eat 12 hours",
+        points: 1,
+      },
+      {
+        name: "Consume under 2000 calories",
+        points: 1,
+      },
+      {
+        name: "Complete a 2km run",
+        points: 3,
+      },
+    ],
   },
   cooking: {
-    icon: <Coffee size={skillSize} />,
-    quests: ["Learn a new recipe"],
+    icon: <Coffee size={iconSize} />,
+    quests: [
+      {
+        name: "Make a meal",
+        points: 1,
+      },
+      {
+        name: "Learn a new recipe",
+        points: 3,
+      },
+    ],
   },
 };
 
 interface SaveData {
   level: number;
   experience: number;
+  complete_date: string;
   skills: {
     [key: string]: {
       points: number;
@@ -48,6 +84,18 @@ const Home = () => {
     () => fibonacci((saveData?.level ?? 1) + 1) * baseLevelExperience,
     [saveData?.level]
   );
+
+  const currentDate = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const hoursUntilMidnight = useMemo(() => {
+    const midnight = new Date();
+    midnight.setHours(24);
+    midnight.setMinutes(0);
+    midnight.setSeconds(0);
+    midnight.setMilliseconds(0);
+    return Math.ceil(
+      (midnight.getTime() - new Date().getTime()) / 1000 / 60 / 60
+    );
+  }, []);
 
   useEffect(() => {
     const localSaveData =
@@ -75,8 +123,16 @@ const Home = () => {
   useEffect(() => {
     if (saveData) {
       localStorage.setItem("saveData", JSON.stringify(saveData));
+      if (saveData.complete_date !== currentDate) {
+        let newSaveData = { ...saveData } as SaveData;
+        Object.keys(skills).forEach((skill) => {
+          newSaveData.skills[skill].quests.fill(false);
+        });
+        newSaveData.complete_date = currentDate;
+        setSaveData(newSaveData);
+      }
     }
-  }, [saveData]);
+  }, [currentDate, saveData]);
 
   const handleCompleteQuest = useCallback(
     (index: number, checked: boolean) => {
@@ -86,20 +142,23 @@ const Home = () => {
         newSaveData.experience -= levelExperience;
         newSaveData.level += 1;
       }
-      newSaveData.skills[selectedQuest].points += 1;
+
+      newSaveData.skills[selectedQuest].points +=
+        skills[selectedQuest].quests[index].points;
+
       newSaveData.skills[selectedQuest].quests[index] = checked;
       setSaveData(newSaveData);
     },
     [levelExperience, saveData, selectedQuest]
   );
 
-  if (!saveData) return null;
+  if (!saveData || saveData.complete_date !== currentDate) return null;
 
   return (
     <main className="flex justify-center">
-      <div className="flex flex-col gap-4 m-4">
+      <div className="flex flex-col gap-4 m-4 w-[700px]">
         <Menu>
-          <span className="uppercase text-xl">Level. 1</span>
+          <span className="uppercase text-xl">Level. {saveData.level}</span>
           <progress
             value={saveData.experience}
             max={levelExperience}
@@ -132,24 +191,30 @@ const Home = () => {
             ))}
           </div>
         </Menu>
-        <Menu title="Quest">
+        <Menu title="Quests">
           <div>
             <ul>
               {skills[selectedQuest]?.quests.map((quest, index) => (
-                <li key={quest}>
+                <li key={quest.name}>
                   <div className="flex flex-row gap-2 items-center my-2">
                     <Checkbox
                       defaultChecked={
                         saveData.skills[selectedQuest].quests[index] ?? false
                       }
-                      onChange={(e) =>
-                        handleCompleteQuest(index, e.target.checked)
-                      }
+                      onChange={(e) => {
+                        handleCompleteQuest(index, e.target.checked);
+                      }}
                     />
-                    <span className="text-lg">{quest}</span>
+                    <span className="text-lg">{quest.name}</span>
                   </div>
                 </li>
               ))}
+              <div className="flex flex-row gap-2 my-4">
+                <AlertCircle size={32} />
+                <span className="text-lg">
+                  Resets in {hoursUntilMidnight} hours
+                </span>
+              </div>
             </ul>
           </div>
         </Menu>
@@ -158,4 +223,4 @@ const Home = () => {
   );
 };
 
-export { Home };
+export default Home;

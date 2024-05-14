@@ -9,6 +9,6 @@ html {
 }
 
 body {
-	background: linear-gradient(-45deg, black, indigo, midnightblue, black);
+	background: linear-gradient(midnightblue, black);
 	height: 100vh;
 }

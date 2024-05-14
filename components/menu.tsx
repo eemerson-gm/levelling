@@ -1,3 +1,5 @@
+import React from "react";
+
 const Menu: React.FC<{ title?: string; children: React.ReactNode }> = ({
   title,
   children,
