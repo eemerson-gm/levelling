@@ -2,8 +2,17 @@
 
 import { Checkbox } from "@/components/checkbox";
 import { Menu } from "@/components/menu";
+import { merge } from "lodash";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertCircle, Coffee, Wind, Zap } from "react-feather";
+import {
+  Activity,
+  AlertCircle,
+  BookOpen,
+  DollarSign,
+  Droplet,
+  Heart,
+  Zap,
+} from "react-feather";
 
 const iconSize = "64";
 const baseLevelExperience = 100;
@@ -11,7 +20,7 @@ const baseGainExperience = 10;
 
 const skills = {
   strength: {
-    icon: <Zap size={iconSize} />,
+    icon: <Activity size={iconSize} />,
     quests: [
       {
         name: "Complete 10 push-ups",
@@ -28,10 +37,10 @@ const skills = {
     ],
   },
   dexterity: {
-    icon: <Wind size={iconSize} />,
+    icon: <Zap size={iconSize} />,
     quests: [
       {
-        name: "Don't eat 12 hours",
+        name: "Fast for 12 hours",
         points: 1,
       },
       {
@@ -45,7 +54,7 @@ const skills = {
     ],
   },
   cooking: {
-    icon: <Coffee size={iconSize} />,
+    icon: <Droplet size={iconSize} />,
     quests: [
       {
         name: "Make a meal",
@@ -54,6 +63,37 @@ const skills = {
       {
         name: "Learn a new recipe",
         points: 3,
+      },
+    ],
+  },
+  intelligence: {
+    icon: <BookOpen size={iconSize} />,
+    quests: [
+      {
+        name: "Read a book",
+        points: 3,
+      },
+      {
+        name: "Practice a language",
+        points: 2,
+      },
+    ],
+  },
+  charisma: {
+    icon: <Heart size={iconSize} />,
+    quests: [
+      {
+        name: "Spend time with friends",
+        points: 2,
+      },
+    ],
+  },
+  money: {
+    icon: <DollarSign size={iconSize} />,
+    quests: [
+      {
+        name: "Practice for 10 minutes",
+        points: 1,
       },
     ],
   },
@@ -86,6 +126,23 @@ const Home = () => {
   );
 
   const currentDate = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const defaultSaveSkills = useMemo(
+    () => ({
+      level: 1,
+      experience: 0,
+      skills: Object.entries(skills).reduce(
+        (acc, [key, skill]) => ({
+          ...acc,
+          [key]: {
+            points: 0,
+            quests: new Array(skill.quests.length).fill(false),
+          },
+        }),
+        {}
+      ),
+    }),
+    []
+  );
   const hoursUntilMidnight = useMemo(() => {
     const midnight = new Date();
     midnight.setHours(24);
@@ -99,26 +156,13 @@ const Home = () => {
 
   useEffect(() => {
     const localSaveData =
-      localStorage.getItem("saveData") ??
-      JSON.stringify({
-        level: 1,
-        experience: 0,
-        skills: Object.entries(skills).reduce(
-          (acc, [key, skill]) => ({
-            ...acc,
-            [key]: {
-              points: 0,
-              quests: new Array(skill.quests.length).fill(false),
-            },
-          }),
-          {}
-        ),
-      });
+      localStorage.getItem("saveData") ?? JSON.stringify(defaultSaveSkills);
     if (!localStorage.getItem("saveData")) {
       localStorage.setItem("saveData", localSaveData);
     }
-    setSaveData(JSON.parse(localSaveData));
-  }, []);
+
+    setSaveData(merge(defaultSaveSkills, JSON.parse(localSaveData)));
+  }, [defaultSaveSkills]);
 
   useEffect(() => {
     if (saveData) {
